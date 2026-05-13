@@ -1,0 +1,11 @@
+services:
+  ecs-influxdb-exporter:
+    image: vnk-nexus.abramad.com/ecs-influxdb-exporter:1.0
+    container_name: ecs-influxdb-exporter
+    ports:
+      - "9545:9545"
+
+    restart: unless-stopped
+    
+    mem_limit: 256m
+    cpus: 0.5
