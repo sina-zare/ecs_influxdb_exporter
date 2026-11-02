@@ -11,7 +11,21 @@ from urllib.parse import parse_qs
 
 
 # ---------------- Data Fetch ----------------
-def fetch_latency(target, registry):
+def fetch_latency(
+    target: str,
+    registry: CollectorRegistry,
+) -> None:
+    """Collect disk I/O statistics and expose average latency metrics.
+
+    Queries InfluxDB for the latest disk read/write counters, calculates
+    average read and write latency, and exports the results as Prometheus
+    gauges.
+
+    Args:
+        target: InfluxDB host and port.
+        registry: Prometheus registry used to register the metrics.
+    """
+    
     url = f"http://{target}"
     client = InfluxDBClient(url=url, timeout=5000)
     query_api = client.query_api()
@@ -111,7 +125,21 @@ def fetch_latency(target, registry):
     client.close()
 
 
-def fetch_disk(target, registry):
+def fetch_disk(
+    target: str,
+    registry: CollectorRegistry,
+) -> None:
+    """Collect disk usage and inode statistics for ECS nodes.
+
+    Retrieves the latest disk statistics from InfluxDB, calculates
+    missing total capacity or usage percentages when possible, and
+    exports the results as Prometheus gauges.
+
+    Args:
+        target: InfluxDB host and port.
+        registry: Prometheus registry used to register the metrics.
+    """
+
     url = f"http://{target}"
     client = InfluxDBClient(url=url, timeout=5000)
     query_api = client.query_api()
@@ -221,7 +249,21 @@ def fetch_disk(target, registry):
 
     client.close()
 
-def fetch_cpu(target, registry):
+def fetch_cpu(
+    target: str,
+    registry: CollectorRegistry,
+) -> None:
+    """Collect CPU utilization statistics for ECS nodes.
+
+    Retrieves CPU idle, user, system, and I/O wait percentages from
+    InfluxDB and exports the results as Prometheus gauges. Total CPU
+    utilization is calculated as 100 minus CPU idle percentage.
+
+    Args:
+        target: InfluxDB host and port.
+        registry: Prometheus registry used to register the metrics.
+    """
+
     url = f"http://{target}"
     client = InfluxDBClient(url=url, timeout=5000)
     query_api = client.query_api()
@@ -299,7 +341,20 @@ def fetch_cpu(target, registry):
 
     client.close()
 
-def fetch_memory(target, registry):
+def fetch_memory(
+    target: str,
+    registry: CollectorRegistry,
+) -> None:
+    """Collect memory utilization statistics for ECS nodes.
+
+    Retrieves used, free, and total memory values from InfluxDB.
+    Calculates total memory from used and free values, then exports the results as Prometheus gauges.
+
+    Args:
+        target: InfluxDB host and port.
+        registry: Prometheus registry used to register the metrics.
+    """
+
     url = f"http://{target}"
     client = InfluxDBClient(url=url, timeout=5000)
     query_api = client.query_api()
@@ -371,6 +426,21 @@ BUCKET = "monitoring_op"
 
 # ---------------- WSGI App ----------------
 def app(environ, start_response):
+    """Handle HTTP requests for health checks and Prometheus metrics.
+
+    Supports the following endpoints:
+        GET /health: Returns the application health status.
+        GET /metrics?target=<host>: Collects and exposes ECS metrics.
+
+    Args:
+        environ: WSGI environment containing HTTP request information.
+        start_response: WSGI callable used to send the HTTP response status
+            and headers.
+
+    Returns:
+        An iterable containing the HTTP response body.
+    """
+    
     path = environ.get("PATH_INFO", "")
 
     # Health endpoint
